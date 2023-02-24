@@ -1,0 +1,134 @@
+library(coloc)
+library(data.table)
+library(dplyr)
+
+#read in the snps for the colocalisation 
+
+snps_coloc <- as.data.table(fread('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/FUMA_fullsumstats/leadSNPs/filtered_SNPs_for_coloc.csv'))
+
+#read in the MDD sumstats 
+mdd_sumstats <- as.data.frame(fread("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz"))
+
+print("Filtering snps for MAF > 0.005")
+
+mdd_sumstats <- mdd_sumstats %>% filter(FRQ_U_314566 < 0.995 & FRQ_U_314566 > 0.005)
+
+mdd_sumstats$MAF <- ifelse(mdd_sumstats$FRQ_U_314566 > 0.5, 1-mdd_sumstats$FRQ_U_314566, mdd_sumstats$FRQ_U_314566)
+
+#the linker file 
+meta_name_linker <- read.csv('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/Nightingale_markers_desc_full.csv', header = TRUE)
+
+meta_name_linker$linker_ID <- paste(meta_name_linker$Field.ID, ".0.0", sep = '')
+meta_name_linker$linker_ID <- paste('f.',meta_name_linker$linker_ID, sep = '')
+
+get_metabolitename <- function(ID_vector) {
+  metabolite_names <- c()
+  for (i in ID_vector){
+    metabolite <- meta_name_linker$Description[meta_name_linker$linker_ID == i]
+    metabolite_names <- append(metabolite_names, metabolite)
+  }
+  return(metabolite_names)
+}
+
+#create an output dataframe for the results 
+print('Setting up an empty list for all the matrices to go into')
+coloc_output_list <- list()
+#got loop for each metabolite
+for(i in 1:length(unique(snps_coloc$metabolite_code))){  
+  print('Establishing metabolite')
+  metabolite_c <- unique(snps_coloc$metabolite_code)[i]
+  metabolite_name <- get_metabolitename(metabolite_c)
+  print(metabolite_name)
+  print('Reading in the metabolite GWAS file')
+  metabolite_gwas_file <- paste('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_GWAS/all_part_GWAS/', metabolite_c,'.gwas/', 'norm_all_gwas.', metabolite_c, '.glm.linear.ldsc.gz', sep = "")
+  metabolite_gwas <- as.data.frame(fread(metabolite_gwas_file))
+
+  print('Filtering the metabolite GWAS file to have MAF > 0.005')
+  metabolite_gwas$A1_FREQ <- as.numeric(metabolite_gwas$A1_FREQ)
+  metabolite_gwas <- metabolite_gwas %>% filter(A1_FREQ < 0.995 & A1_FREQ > 0.005)
+  metabolite_gwas$MAF <- ifelse(metabolite_gwas$A1_FREQ > 0.5, 1-metabolite_gwas$A1_FREQ, metabolite_gwas$A1_FREQ)
+  print('Selecting only the FUMA SNPs for this metabolite')
+  tmp_metabolite <- snps_coloc %>% filter(metabolite_code == metabolite_c)
+  print('Setting up the matrix for results for this metabolite')
+  output <- matrix(nrow = nrow(tmp_metabolite), ncol = 10)
+  output <- as.data.frame(output)
+  names(output) <- c("SNP", "Metabolite","CHR", "POS", "nsnps", "PP.H0", "PP.H1", "PP.H2", "PP.H3", "PP.H4")
+
+  #for loop for the SNPs in each metabolite 
+  print('Looping through the SNPs for the metabolite:')
+  for(j in 1:length(tmp_metabolite$metabolite_code)){
+  ## Extract SNP 
+  tmp = tmp_metabolite[j, ]
+  print(tmp)
+  ## Extract the SNPs coordinates 
+  position = as.numeric(tmp$POS)
+  chr = as.numeric(tmp$'#CHROM')
+  ## Subset MDD summ stats file to the chr of the queried SNP 
+  print('Subsetting the MDD sumstats file')
+  tmp_mdd <- mdd_sumstats[which(mdd_sumstats$CHR %in% chr), ]
+  ## Subset MDD summ stats file to region +/- 1 Mb from queried SNP 
+  ## In coloc, we normally extract the region 400 kb around the SNP of interest (i.e. 200 kb above and below it)-- in this case following Shen's paper, it is a larger area 
+  tmp_mdd <- tmp_mdd[which(tmp_mdd$BP >= (position - 1e6)),]
+  tmp_mdd <- tmp_mdd[which(tmp_mdd$BP <= (position + 1e6)),]
+  s_mdd_parameter <- max(tmp_mdd$Nca) / (max(tmp_mdd$Nca) + max(tmp_mdd$Nco))
+
+  print('Subsetting the metabolite GWAS file')
+  #subset the metabolite file to chr and position 
+
+  tmp_met_gwas <- metabolite_gwas[which(metabolite_gwas$'#CHROM' %in% chr),]
+  
+  #subset the metabolite file to region +- 1Mb from queried SNP 
+
+  tmp_met_gwas  <- tmp_met_gwas[which(tmp_met_gwas$POS >= (position -1e6)),]
+  tmp_met_gwas  <- tmp_met_gwas[which(tmp_met_gwas$POS <= (position +1e6)),]
+
+  #get the MAF 
+
+  print('Calculating the MAF for metabolite GWAS')
+
+  print('Cleaning the GWAS files, so no NA values in MAF or SNPs and no duplicated SNPs')
+
+  print('Setting up the dataset for the coloc analysis')
+  #dataset 1- MDD, type = case control 
+  #is the standard deviation 1? 
+  dataset1 = list(snp = as.character(tmp_mdd$SNP), N = as.numeric(tmp_mdd$N), beta = as.numeric(tmp_mdd$BETA), MAF = as.numeric(tmp_mdd$MAF), varbeta= as.numeric(tmp_mdd$SE)^2, pvalues = as.numeric(tmp_mdd$P), type = 'cc', s = s_mdd_parameter)
+
+  #dataset 2- the metabolite GWAS - quantatitive and sdY = 1 (as they are inverse rank noramlised)
+  dataset2 = list(snp = as.character(tmp_met_gwas$SNP), N = 88329, pvalues = as.numeric(tmp_met_gwas$P), beta = as.numeric(tmp_met_gwas$BETA), varbeta = as.numeric(tmp_met_gwas$SE)^2, MAF = as.numeric(tmp_met_gwas$MAF), type = "quant", sdY= 1)
+  ## run coloc itself 
+  print('Running coloc')
+  coloc = coloc.abf(dataset2, dataset1)
+  print('Storing the output')
+  ## Store outputs from this coloc analysis
+  ind = j
+  print(ind)
+  output[ind, 1] <- tmp$SNP
+  output[ind, 2] <- tmp$metabolite_name
+  output[ind, 3] <- chr
+  output[ind, 4] <- position
+  output[ind, 5] <- coloc[[1]][[1]]
+  output[ind, 6] <- coloc[[1]][[2]]
+  output[ind, 7] <- coloc[[1]][[3]]
+  output[ind, 8] <- coloc[[1]][[4]]
+  output[ind, 9] <- coloc[[1]][[5]]
+  output[ind, 10] <- coloc[[1]][[6]]
+}
+print('Adding the metabolite coloc results matrix to a the list of results')
+coloc_output_list[[i]] <- output
+}
+
+print('Loop done!')
+coloc_output_all <- do.call(rbind, coloc_output_list)
+## Tidy up output 
+## Normally we take PP.H4 > 95% as strong evidence for colocalisation 
+coloc_output_all <- as.data.frame(coloc_output_all)
+coloc_output_all = coloc_output_all[rev(order(coloc_output_all$PP.H4)),] 
+coloc_output_all[,c(6:10)] <- signif(coloc_output_all[,c(6:10)],2)
+
+## Save output 
+write.csv(coloc_output_all, "/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/coloc/coloc_abf_results_FUMA_filteredleadSNPs_mdd_S_18_05.csv", row.names = F) 
+
+
+
+  
+
