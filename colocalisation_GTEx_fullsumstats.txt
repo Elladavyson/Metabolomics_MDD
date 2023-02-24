@@ -1,0 +1,112 @@
+library(coloc)
+library(data.table)
+library(dplyr)
+library(readr)
+
+#read in the MDD sumstats 
+print("MDD sumstats")
+
+mdd_sumstats <- as.data.frame(fread("/exports/eddie/scratch/s2112198/23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz")) 
+
+print("Filtering snps for MAF > 0.005")
+
+mdd_sumstats <- mdd_sumstats %>% filter(Freq1 < 0.995 & Freq1 > 0.005)
+
+mdd_sumstats$MAF <- ifelse(mdd_sumstats$Freq1 > 0.5, 1-mdd_sumstats$Freq1, mdd_sumstats$Freq1)
+
+print('All eQTL_sumstats from GTEx')
+
+gTEX_sumstats <- read.table('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_Whole_Blood_all_assoc_chr11.tsv', sep = '\t', header =T)
+#Dictionary for the proteins and their ENSEMBL IDs
+
+proteins = c('MYRF'='ENSG00000124920.13', 'TMEM258'= 'ENSG00000134825.15', 'FEN1'='ENSG00000168496.3','FADS1' = 'ENSG00000149485.18', 'FADS2'='ENSG00000134824.13', 'FADS3'='ENSG00000221968.8')
+
+#Selecting just the SNP-protein associations for the protein expresion that we want to test in colocalisation 
+print('Setting up the matrix for coloc results')
+output <- matrix(nrow = length(proteins), ncol = 16)
+output <- as.data.frame(output)
+names(output) <- c("Protein", "SNP","CHR", "POS", "nsnps", "PP.H0", "PP.H1", "PP.H2", "PP.H3", "PP.H4", 'No.MDD SNPs',  'No eQTL SNPs', 'MDD min BP','MDD max BP', 'eQTL min BP', 'eQTL max BP')
+
+print('Beginning the loop')
+
+for (j in 1:length(proteins)) {
+protein = names(proteins[j])
+ENSG_protein = as.character(proteins[protein])
+gTEX_sumstats_prot <- gTEX_sumstats %>% filter(phenotype_id == ENSG_protein)
+
+print("Filtering for MAF > 0.005")
+
+gTEX_sumstats_prot <- gTEX_sumstats_prot %>% filter(maf > 0.005)
+topeQTL <- gTEX_sumstats_prot %>% filter(pval_nominal == min(pval_nominal))
+if (dim(topeQTL)[1]>1) {
+  topeQTL <- topeQTL[1,]
+}
+print(topeQTL$rs_id_dbSNP151_GRCh38p7)
+position <- topeQTL$variant_pos_b37
+chr <- as.numeric(substr(topeQTL$chr, 4,5))
+
+print('Subsetting the MDD sumstats file')
+tmp_mdd <- mdd_sumstats[which(mdd_sumstats$CHR %in% chr), ]
+## Subset MDD summ stats file to region +/- 1 Mb from queried SNP 
+## In coloc, we normally extract the region 400 kb around the SNP of interest (i.e. 200 kb above and below it)-- in this case following Shen's paper, it is a larger area 
+tmp_mdd <- tmp_mdd[which(tmp_mdd$BP >= (position - 1e6)),]
+tmp_mdd <- tmp_mdd[which(tmp_mdd$BP <= (position + 1e6)),]
+print(paste('Dimensions of the MDD summary statistics used in the colocalisation: ', dim(tmp_mdd))
+#subset the metabolite file to region +- 1Mb from queried SNP 
+
+tmp_eQTL <- gTEX_sumstats_prot[which(gTEX_sumstats_prot$variant_pos_b37 >= (position -1e6)),]
+tmp_eQTL <- tmp_eQTL[which(tmp_eQTL$variant_pos_b37 <= (position +1e6)),]
+tmp_eQTL <- tmp_eQTL[!duplicated(tmp_eQTL$rs_id_dbSNP151_GRCh38p7),]
+print('Setting up the dataset for the coloc analysis')
+#dataset 1- MDD, type = case control 
+#is the standard deviation 1? 
+
+s_mdd_parameter <- max(tmp_mdd$Total_cases) / (max(tmp_mdd$Total_cases) + max(tmp_mdd$Total_controls))
+
+print(paste('Dimensions of the eQTL sumstats used in the colocalisation: ',dim(tmp_eQTL)
+
+print(paste('S parameter for MDD: ', s_mdd_parameter) 
+
+mdd_coloc_dataset = list(snp = as.character(tmp_mdd$MarkerName), N = as.numeric(tmp_mdd$Total_all), beta = as.numeric(tmp_mdd$Effect), MAF = as.numeric(tmp_mdd$MAF), varbeta= as.numeric(tmp_mdd$StdErr)^2, pvalues = as.numeric(tmp_mdd$P.value), type = 'cc', s = s_mdd_parameter)
+
+#dataset 2- the FADS2 GWAS - quantatitive and sdY ==1 (assuming that they have been normalised?)
+  
+eQTL_coloc_dataset = list(snp = as.character(tmp_eQTL$rs_id_dbSNP151_GRCh38p7), N = as.numeric(tmp_eQTL$ma_count) , pvalues = as.numeric(tmp_eQTL$pval_nominal), beta = as.numeric(tmp_eQTL$slope), varbeta = as.numeric(tmp_eQTL$slope_se)^2, MAF = as.numeric(tmp_eQTL$maf), type = "quant")
+
+coloc = coloc.abf(mdd_coloc_dataset, eQTL_coloc_dataset)
+ind = j
+print(ind)
+print(protein)
+output[ind, 1] <- protein 
+output[ind, 2] <- topeQTL$rs_id_dbSNP151_GRCh38p7
+output[ind, 3] <- chr
+output[ind, 4] <- position
+output[ind, 5] <- coloc[[1]][[1]]
+output[ind, 6] <- coloc[[1]][[2]]
+output[ind, 7] <- coloc[[1]][[3]]
+output[ind, 8] <- coloc[[1]][[4]]
+output[ind, 9] <- coloc[[1]][[5]]
+output[ind, 10] <- coloc[[1]][[6]]
+output[ind, 11] <- dim(tmp_mdd)[1]
+output[ind, 12] <- dim(tmp_eQTL)[1]
+output[ind, 13] <- min(tmp_mdd$BP)
+output[ind, 14] <- max(tmp_mdd$BP)
+output[ind, 15] <- min(tmp_eQTL$variant_pos_b37)
+output[ind, 16] <- max(tmp_eQTL$variant_pos_b37)
+}
+
+
+print('Loop done!')
+
+## Tidy up output 
+## Normally we take PP.H4 > 95% as strong evidence for colocalisation 
+output  <- as.data.frame(output)
+output = output[rev(order(output$PP.H4)),] 
+
+## Save output 
+write.csv(output, "/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/all_eQTL/all_GTEx_coloc_results_full_sumstats.csv", row.names = F) 
+
+
+
+  
+
