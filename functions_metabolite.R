@@ -206,11 +206,6 @@ MR_oddsratios <- function(MR_method, results, col, ymin, ymax, label_size, OR_co
 
 
 
-
-
-
-
-
 ### colocalisation hypothesis probability plots ### 
 
 coloc_prob_plots <- function(coloc_results_df_chrformat, chraxis_dataframe, hypothesis) {
