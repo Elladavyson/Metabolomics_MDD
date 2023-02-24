@@ -1,0 +1,129 @@
+import pandas as pd 
+import numpy as np 
+import sys 
+import os 
+import time
+
+start_time = time.time()
+
+#directories 
+
+ldsc_dir = '/exports/eddie/scratch/s2112198/'
+eddie_gwas_dir = '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_GWAS/'
+
+#rg log file names
+log_files_name = "%s.ldsc.rg_met_mdd.log"
+
+#make an empty dataframe for the results to go into 
+
+rg_column_names= ['Metabolite_h2', 'Metabolite_h2_SE', 'Metabolite_lambda_GC', 'Metabolite_mean_chi2', 'Metabolite_intercept', 'Metabolite_intercept_SE', 'Metabolite_ratio', 'Metabolite_ratio_SE', 'TOS_GenCovar','TOS_GenCovar_se', 'mean_z1_z2', 'intercept','intercept_se', 'genetic_correlation', 'genetic_correlation_se','z_score', 'p']
+rg_dataframe = pd.DataFrame(columns = rg_column_names)
+rg_dataframe = rg_dataframe.assign(Metabolite_h2 = float('nan'), Metabolite_h2_SE= float('nan'), Metabolite_lambda_GC = float('nan'), Metabolite_mean_chi2 = float('nan'), Metabolite_intercept = float('nan'), Metabolite_intercept_SE = float('nan'), Metabolite_ratio = float('nan'), Metabolite_ratio_SE = float('nan') ,TOS_GenCovar = float('nan'), TOS_GenCovar_se = float('nan'), mean_z1_z2 = float('nan'), intercept =float('nan'), intercept_se = float('nan'),genetic_correlation= float('nan'), genetic_correlation_se = float('nan'), z_score=float('nan'), p=float('nan'))
+
+mdd_column_names = ['MDD_h2', 'MDD_h2_SE', 'MDD_lambda_GC', 'MDD_mean_chi2', 'MDD_intercept', 'MDD_intercept_SE', 'MDD_ratio', 'MDD_ratio_SE']
+mdd_h2_dataframe = pd.DataFrame(columns = mdd_column_names)
+mdd_h2_dataframe = mdd_h2_dataframe.assign(MDD_h2 = float('nan'), MDD_h2_SE = float('nan'), MDD_lambda_GC = float('nan'), MDD_mean_chi2 = float('nan'), MDD_intercept = float('nan'), MDD_intercept_SE = float('nan'), MDD_ratio = float('nan'), MDD_ratio_SE = float('nan'))
+
+#read in the all(?) the log files 
+#read in the metabolite file 
+
+metabolite_file = open('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/all_metabolites_list.txt')
+
+#using one metabolite log file to make a table about the MDD heritability 
+
+test_metabolite_name = 'f.23400.0.0'
+test_metabolite_filename = ldsc_dir + log_files_name % test_metabolite_name 
+test_metabolite_log_file = open(test_metabolite_filename, 'r')
+test_metabolite_log_text = test_metabolite_log_file.readlines()
+for line in range(len(test_metabolite_log_text)):
+    text = test_metabolite_log_text[line].rstrip()
+    print(line)
+    if text.startswith('Heritability of phenotype 2'):
+        mdd_h2 = float(test_metabolite_log_text[line+2].rstrip().split(" ")[-2])
+        mdd_h2_SE = float(test_metabolite_log_text[line+2].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+        mdd_lambda_GC = float(test_metabolite_log_text[line+3].rstrip().split(" ")[-1])
+        mdd_mean_chi2 = float(test_metabolite_log_text[line+4].rstrip().split(" ")[-1])
+        mdd_intercept = float(test_metabolite_log_text[line+5].rstrip().split(" ")[-2])
+        mdd_intercept_se = float(test_metabolite_log_text[line+5].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+        mdd_ratio = float(test_metabolite_log_text[line+6].rstrip().split(" ")[-2])
+        mdd_ratio_se = float(test_metabolite_log_text[line+6].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_h2'] = mdd_h2
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_h2_SE'] = mdd_h2_SE
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_lambda_GC'] = mdd_lambda_GC
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_mean_chi2'] = mdd_mean_chi2
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_intercept'] = mdd_intercept 
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_intercept_SE'] = mdd_intercept_se
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_ratio'] = mdd_ratio
+        mdd_h2_dataframe.at[test_metabolite_name, 'MDD_ratio_SE'] = mdd_intercept_se 
+
+metabolites_list = metabolite_file.readlines()
+
+for i in range(len(metabolites_list)):
+    metabolite_name = metabolites_list[i].rstrip()
+    metabolite_fileName = ldsc_dir + log_files_name % metabolite_name
+    metabolite_log_file = open(metabolite_fileName, 'r')
+    metabolite_log_text = metabolite_log_file.readlines()
+    for metabolite in range(len(metabolite_log_text)):
+        line = metabolite_log_text[metabolite].rstrip()
+        print(line)
+        if line.startswith('Heritability of phenotype 1'):
+            metabol_h2 = float(metabolite_log_text[metabolite+2].rstrip().split(" ")[-2])
+            metabol_h2_SE = float(metabolite_log_text[metabolite+2].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+            metabol_lambda_GC = float(metabolite_log_text[metabolite+3].rstrip().split(" ")[-1])
+            metabol_mean_chi2 = float(metabolite_log_text[metabolite+4].rstrip().split(" ")[-1])
+            metabol_intercept = float(metabolite_log_text[metabolite+5].rstrip().split(" ")[-2])
+            metabol_intercept_se = float(metabolite_log_text[metabolite+5].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+            if len(metabolite_log_text[metabolite+6].rstrip().split(" ")) > 5: 
+                metabol_ratio = float(metabolite_log_text[metabolite+6].rstrip().replace("(usually indicates GC correction).", "").split(" ")[-2])
+                metabol_ratio_se = float(metabolite_log_text[metabolite+6].rstrip().replace("(usually indicates GC correction).", "").split(" ")[-2])
+            else:
+                metabol_ratio = float(metabolite_log_text[metabolite+6].rstrip().split(" ")[-2])
+                metabol_ratio_se = float(metabolite_log_text[metabolite+6].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+            rg_dataframe.at[metabolite_name, 'Metabolite_h2'] = metabol_h2
+            rg_dataframe.at[metabolite_name, 'Metabolite_h2_SE'] = metabol_h2_SE
+            rg_dataframe.at[metabolite_name, 'Metabolite_lambda_GC'] = metabol_lambda_GC
+            rg_dataframe.at[metabolite_name, 'Metabolite_mean_chi2'] = metabol_mean_chi2
+            rg_dataframe.at[metabolite_name, 'Metabolite_intercept'] = metabol_intercept 
+            rg_dataframe.at[metabolite_name, 'Metabolite_intercept_SE'] = metabol_intercept_se
+            rg_dataframe.at[metabolite_name, 'Metabolite_ratio'] = metabol_ratio
+            rg_dataframe.at[metabolite_name, 'Metabolite_ratio_SE'] = metabol_intercept_se 
+        if line.startswith('Genetic Covariance'):
+            gencov = float(metabolite_log_text[metabolite+2].rstrip().split(" ")[-2])
+            gencov_se = float(metabolite_log_text[metabolite+2].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+            mean_z1_z2 = float(metabolite_log_text[metabolite+3].rstrip().split(" ")[-1])
+            intercept= float(metabolite_log_text[metabolite+4].rstrip().split(" ")[-2])
+            intercept_se= float(metabolite_log_text[metabolite+4].rstrip().split(" ")[-1].replace("(","").replace(")",""))
+            rg_dataframe.at[metabolite_name, 'TOS_GenCovar'] = gencov 
+            rg_dataframe.at[metabolite_name, 'TOS_GenCovar_se'] = gencov_se
+            rg_dataframe.at[metabolite_name, 'mean_z1_z2'] = mean_z1_z2
+            rg_dataframe.at[metabolite_name, 'intercept'] = intercept
+            rg_dataframe.at[metabolite_name, 'intercept_se'] = intercept_se
+        if line.startswith('Genetic Correlation:'):
+            gencor = float(line.rstrip().replace(" (h2  out of bounds)", "").replace(" (rg out of bounds)", "").split(" ")[-2])
+            gencor_se = float(line.rstrip().replace(" (h2  out of bounds)", "").replace(" (rg out of bounds)", "").split(" ")[-1].replace("(", "").replace(")",""))
+            if len(metabolite_log_text[metabolite+1].rstrip().split(" ")) > 4: 
+                z_score = float(metabolite_log_text[metabolite+1].rstrip().replace(" (h2  out of bounds)", "").replace(" (rg out of bounds)", "").split(" ")[-2])
+                p = float(metabolite_log_text[metabolite+2].rstrip().replace(" (h2  out of bounds)", "").replace(" (rg out of bounds)", "").split(" ")[-2])
+            else: 
+                z_score = float(metabolite_log_text[metabolite+1].rstrip().split(" ")[-1])
+                p = float(metabolite_log_text[metabolite+2].rstrip().split(" ")[-1])
+            rg_dataframe.at[metabolite_name, 'genetic_correlation'] = gencor
+            rg_dataframe.at[metabolite_name, 'genetic_correlation_se'] = gencor_se
+            rg_dataframe.at[metabolite_name, 'z_score'] = z_score
+            rg_dataframe.at[metabolite_name, 'p'] = p
+
+
+print(rg_dataframe.head())
+print(mdd_h2_dataframe.head())
+
+rg_out_filename = eddie_gwas_dir + 'rg_MDD_metabolites.tsv'
+MDD_h2_filename = eddie_gwas_dir + 'MDD_heritability.tsv'
+
+rg_dataframe.to_csv(rg_out_filename, sep = '\t', na_rep = 'nan', index_label = 'Metabolite')
+mdd_h2_dataframe.to_csv(MDD_h2_filename, sep = '\t', na_rep = 'nan')
+
+
+print(rg_out_filename)
+print(MDD_h2_filename)
+print('Done')
+print("From Python: Time:",  (time.time() - start_time)/3600.)
