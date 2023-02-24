@@ -1,0 +1,46 @@
+#running LDscore on all sumstats
+#$ -l h_rt=48:00:00
+#$ -l h_vmem=2G
+#$ -pe sharedmem 12
+#$ -e LDscore_logs
+#$ -o LDscore_logs
+#$ -cwd
+
+#filepaths 
+
+METABOLOMICS=/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021
+GWAS_DIR=/exports/eddie/scratch/s2112198/col_num_loop
+LDSC=/exports/eddie/scratch/s2112198/ldsc
+
+#setting up the python environment
+
+. /etc/profile.d/modules.sh
+module load anaconda
+source activate ldsc
+
+#first converting the summary statistics into something readable by munge.sumstats
+#setting up a loop to do it for each metabolite file 
+
+cat $METABOLOMICS/all_metabolites_list.txt | while read line 
+do
+
+sed -e 's/ID/SNP/g' -e 's/MACH_R2/INFO/g' -e 's/OBS_CT/N/g' -e 's/AX/A2/g' $GWAS_DIR/all_gwas.$line.glm.linear > $GWAS_DIR/all_gwas.$line.glm.linear.ldsc
+
+#run the munge sumstats 
+
+$LDSC/./munge_sumstats.py \
+--sumstats $GWAS_DIR/all_gwas.$line.glm.linear.ldsc \
+--out $GWAS_DIR/$line.ldsc_format
+
+#running the h2 script on the formatted sumstats 
+
+$LDSC/./ldsc.py \
+--h2 $GWAS_DIR/$line.ldsc_format.sumstats.gz \
+--ref-ld-chr $LDSC/eur_w_ld_chr/ \
+--w-ld-chr $LDSC/eur_w_ld_chr/ \
+--out $GWAS_DIR/$line.ldsc.h2
+
+done
+
+
+
