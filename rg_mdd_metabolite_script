@@ -1,0 +1,54 @@
+#$ -N LDscore_rG_metabolites_MDD
+#$ -l h_rt=48:00:00
+#$ -l h_vmem=2G
+#$ -pe sharedmem 12
+#$ -e LDscore_logs
+#$ -o LDscore_logs
+#$ -M s2112198@ed.ac.uk
+#$ -m baes
+#$ -cwd
+
+#filepaths 
+
+METABOLOMICS=/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021
+GWAS_DIR=/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_GWAS/all_part_GWAS
+SCRATCH=/exports/eddie/scratch/s2112198
+LDSC=/exports/eddie/scratch/s2112198/ldsc
+
+#setting up the python environment
+
+. /etc/profile.d/modules.sh
+module load anaconda
+source activate ldsc
+
+#first converting the summary statistics into something readable by munge.sumstats
+#setting up a loop to do it for each metabolite file 
+
+cat $METABOLOMICS/norm_GWAS/all_metabolites_list.txt | while read line 
+
+do
+
+#run the munge sumstats on both the summary statistics  
+
+$LDSC/./munge_sumstats.py \
+--sumstats $GWAS_DIR/$line.gwas/norm_all_gwas.$line.glm.linear_lowerP.ldsc.gz \
+--out $SCRATCH/$line.ldsc_format
+
+$LDSC/.munge_sumstats.py \
+--sumstats $METABOLOMICS/daner_pgc_mdd_meta_w2_rmUKBB
+--daner \
+--chunksize 500000 \
+--out $METABOLOMICS/daner_pgc_mdd_meta_w2_rmUKBB.ldsc_format
+
+#running the h2 script on the formatted sumstats 
+
+$LDSC/./ldsc.py \
+--rg $SCRATCH/$line.ldsc_format.sumstats.gz,$METABOLOMICS/daner_pgc_mdd_meta_w2_rmUKBB.ldsc_format.sumstats.gz \
+--ref-ld-chr $LDSC/eur_w_ld_chr/ \
+--w-ld-chr $LDSC/eur_w_ld_chr/ \
+--out $SCRATCH/$line.ldsc.rg_met_mdd
+
+done
+
+
+
