@@ -1,0 +1,122 @@
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(data.table)
+library(TwoSampleMR)
+
+# Setting up the MR as before, except using the GTEx summary statistics rather then eQTLGen # 
+
+exposures <- c('MYRF', 'TMEM258', 'FEN1', 'FADS1', 'FADS2', 'FADS3')
+length <- length(exposures)
+mr_results_df <- data.frame(exposure= 1:length, MR_beta = 1:length, MR_SE = 1:length, MR_P = 1:length, MR_nsnp = 1:length, snp = 1:length, exposure_beta = 1:length, exposure_se =1:length, exposure_pval = 1:length, outcome_beta = 1:length, outcome_se = 1:length, outcome_pval = 1:length)
+steiger_results_df <- data.frame(id.exposure = character(), id.outcome = character(), exposure = character(), outcome = character(), snp_r2.exposure = numeric(), snp_r2.outcome = numeric(), correct_causal_direction = logical(), steiger_pval = numeric() )
+instruments_list <- list()
+
+for(i in 1:length(exposures)){
+   exposure <- exposures[i]
+   exposure_filename = paste0('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/', exposure, '.sumstats.tsv')
+   eQTL_exposure <- read_exposure_data(filename = exposure_filename,
+   sep = '\t',
+   snp_col = 'rs_id_dbSNP151_GRCh38p7', 
+   beta_col = 'slope', 
+   se_col ='slope_se',
+   effect_allele_col = 'EffectAllele',
+   other_allele_col = 'OtherAllele', ### not sure how to get this, as only have the MAF so far ##  
+   pval_col = 'pval_nominal')
+
+   #could add a sample size column to each of the sumstats to be the number of participants with the whole blood genotyping ? 
+
+    eQTL_exposure$id.exposure<- exposure
+    print('Selecting only the genome wide eQTLs')
+    #if statement to act if there are no genome wide significant hits 
+    if (min(eQTL_exposure$pval.exposure) < 5e-08) {
+        eQTL_exposure_signif <-  eQTL_exposure[ eQTL_exposure$pval.exposure < 5e-08,]
+
+        #no allele frequency step at this point (as there is not a EAF column in the table- could be preprocessed - as there is a MAF column in the data)
+
+        print("Clumping the exposure data:")
+
+        eQTL_exposure_clumped <- clump_data( eQTL_exposure_signif)
+
+        instrument <- eQTL_exposure_clumped[which.min(eQTL_exposure_clumped$pval.exposure),]
+    } else {
+        instrument <- eQTL_exposure[eQTL_exposure$pval.exposure==min(eQTL_exposure$pval.exposure),]
+    }
+
+    #if statement for if there are multiple SNPs with the same minimum P value
+
+    if (dim(instrument)[1] > 1){
+        print('More than one SNP selected as instrument')
+        print(paste('The range of BP in the instrument SNPs', range(instrument$pos.exposure)))
+        instrument = instrument[1,] #just select the top SNP
+    }
+print('Outcome Data')
+
+#the full MDD summary statistics 
+mdd_outcome_data <- read_outcome_data(filename = '/exports/eddie/scratch/s2112198/23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz',
+  snps = instrument$SNP,
+  snp_col = "MarkerName",
+  beta_col = "Effect",
+  se_col = "StdErr",
+  eaf_col = "Freq1",
+  effect_allele_col = "Allele1",
+  other_allele_col = "Allele2",
+  pval_col = "P.value",
+  min_pval = 1e-200,
+  log_pval = FALSE,
+  chr_col = "CHR",
+  pos_col = "BP",
+  ncase_col = "Total_cases",
+  ncontrol_col = "Total_control", 
+  samplesize_col = "Total_all")
+
+mdd_outcome_data$id.outcome <- 'MDD'
+print('Harmonising data')
+
+if (min(eQTL_exposure$pval.exposure) < 5e-08) {
+  harmonised_data <- harmonise_data(exposure_dat = eQTL_exposure_clumped, outcome_dat = mdd_outcome_data)
+} else {
+  harmonised_data <- harmonise_data(exposure_dat = instrument, outcome_dat = mdd_outcome_data)
+}
+
+print('Performing MR')
+mr_wr_results <- mr_wald_ratio(b_exp = harmonised_data$beta.exposure, b_out= harmonised_data$beta.outcome, se_exp = harmonised_data$se.exposure, se_out =harmonised_data$se.outcome)
+
+mr_results_df[i,1] <- exposure
+mr_results_df[i,2] <- mr_wr_results[[1]]
+mr_results_df[i,3] <- mr_wr_results[[2]]
+mr_results_df[i,4] <- mr_wr_results[[3]]
+mr_results_df[i,5] <- mr_wr_results[[4]]
+mr_results_df[i,6] <- harmonised_data$SNP
+mr_results_df[i,7] <- harmonised_data$beta.exposure
+mr_results_df[i,8] <- harmonised_data$se.exposure
+mr_results_df[i,9] <- harmonised_data$pval.exposure
+mr_results_df[i,10] <- harmonised_data$beta.outcome
+mr_results_df[i,11] <- harmonised_data$se.outcome
+mr_results_df[i,12] <- harmonised_data$pval.outcome
+
+
+outcome_r <- get_r_from_lor(mdd_outcome_data$beta.outcome, mdd_outcome_data$eaf.outcome, mdd_outcome_data$ncase.outcome, ncontrol = (mdd_outcome_data$samplesize.outcome = mdd_outcome_data$ncase.outcome), 0.10)
+exposure_r <- get_r_from_pn(instrument$pval.exposure, 670) #the number of samples genotyped for whole blood is 670 (on the GTEx website)
+mr_steiger_results <- mr_steiger(instrument$pval.exposure, mdd_outcome_data$pval.outcome, 670, mdd_outcome_data$samplesize.outcome, exposure_r, outcome_r)
+
+steiger_results_df[i,1] <- instrument$id.exposure
+steiger_results_df[i,2] <- mdd_outcome_data$id.outcome
+steiger_results_df[i,3] <- instrument$exposure
+steiger_results_df[i,4] <- mdd_outcome_data$outcome
+steiger_results_df[i,5] <- mr_steiger_results$r2_exp
+steiger_results_df[i,6] <- mr_steiger_results$r2_out
+steiger_results_df[i,7] <- mr_steiger_results$correct_causal_direction
+steiger_results_df[i,8] <- mr_steiger_results$steiger_test
+
+print(mr_steiger_results)
+instruments_list[[i]] <- instrument
+print(instrument)
+
+}
+
+instruments_df <- do.call(rbind, instruments_list)
+
+write.table(mr_results_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_WR_MR_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
+write.table(steiger_results_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_WR_steiger_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
+write.table(instruments_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_MR_instruments.tsv', sep = '\t', row.names = F, quote = F)
