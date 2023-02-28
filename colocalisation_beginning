@@ -4,10 +4,10 @@ library(dplyr)
 
 #read in the snps for the colocalisation 
 
-snps_coloc <- as.data.table(fread('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/FUMA_fullsumstats/leadSNPs/filtered_SNPs_for_coloc.csv'))
+snps_coloc <- as.data.table(fread('Metabolomics_Aut2021/FUMA_fullsumstats/leadSNPs/filtered_SNPs_for_coloc.csv'))
 
 #read in the MDD sumstats 
-mdd_sumstats <- as.data.frame(fread("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz"))
+mdd_sumstats <- as.data.frame(fread("Metabolomics_Aut2021/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz"))
 
 print("Filtering snps for MAF > 0.005")
 
@@ -126,7 +126,7 @@ coloc_output_all = coloc_output_all[rev(order(coloc_output_all$PP.H4)),]
 coloc_output_all[,c(6:10)] <- signif(coloc_output_all[,c(6:10)],2)
 
 ## Save output 
-write.csv(coloc_output_all, "/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/coloc/coloc_abf_results_FUMA_filteredleadSNPs_mdd_S_18_05.csv", row.names = F) 
+write.csv(coloc_output_all, "Metabolomics_Aut2021/coloc/coloc_abf_results_FUMA_filteredleadSNPs_mdd_S_18_05.csv", row.names = F) 
 
 
 

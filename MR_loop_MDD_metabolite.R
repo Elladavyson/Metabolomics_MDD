@@ -6,16 +6,16 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 
-setwd('/exports/igmm/eddie/GenScotDepression/users/edavyson')
+setwd('')
 
 #reading in the list of metabolites (three to start with )
 
-list_all_metabolites <- read.table("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/all_metabolites_list.txt")
+list_all_metabolites <- read.table("Metabolomics_Aut2021/all_metabolites_list.txt")
 
 print('List of all metabolites read in')
 
 #the linker file 
-meta_name_linker <- read.csv('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/Nightingale_markers_desc_full.csv', header = TRUE)
+meta_name_linker <- read.csv('Metabolomics_Aut2021/Nightingale_markers_desc_full.csv', header = TRUE)
 
 meta_name_linker$linker_ID <- paste(meta_name_linker$Field.ID, ".0.0", sep = '')
 meta_name_linker$linker_ID <- paste('f.',meta_name_linker$linker_ID, sep = '')
@@ -38,7 +38,7 @@ GI_summary <- data.frame(f.eid = 1:1, exposyre_name = 1:1, total_SNPs = 1:1, tot
 
 #read in the exposure data (same for every metabolite)
 print("Reading in the exposure data ")
-exposure_data <- read_exposure_data(filename = '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/raw_GWAS/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz',
+exposure_data <- read_exposure_data(filename = 'Metabolomics_Aut2021/raw_GWAS/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz',
   sep = "\t",
   snp_col = "SNP",
   beta_col = "BETA",
@@ -83,7 +83,7 @@ print('Beginning of loop with the outcome data')
 for (i in 1:dim(list_all_metabolites)[1]) {
   metabolite <- list_all_metabolites[i,]
   print(metabolite)
-  file_name <- paste("/exports/eddie/scratch/s2112198/col_num_loop","/norm_all_gwas.", metabolite, ".glm.linear.ldsc", sep = "")
+  file_name <- paste("col_num_loop","/norm_all_gwas.", metabolite, ".glm.linear.ldsc", sep = "")
   print(file_name)
 
   print("Reading in outcome data")
@@ -120,7 +120,7 @@ res_loo <- mr_leaveoneout(harmonised_data)
 #combining and saving the results 
 print("Combining and saving the results")
 
-output_dir <- '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_MDD_tometabolite/MR_results/'
+output_dir <- 'Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_MDD_tometabolite/MR_results/'
 mr_horiz_pleio <- mr_horiz_pleio %>% slice(rep(1:n(), each = 5)) 
 mr_hetero <- rbind(mr_hetero, NA)
 mr_hetero <- rbind(mr_hetero, NA)
@@ -163,7 +163,7 @@ mr_report(harmonised_data, output_path = report_directory)
 
 }
 
-write.table(GI_summary, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_MDD_tometabolite/MR_results/MDD_tometabolite_GI_summary.tsv', sep = '\t', quote = F, row.names = F)
+write.table(GI_summary, 'Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_MDD_tometabolite/MR_results/MDD_tometabolite_GI_summary.tsv', sep = '\t', quote = F, row.names = F)
 
 
 

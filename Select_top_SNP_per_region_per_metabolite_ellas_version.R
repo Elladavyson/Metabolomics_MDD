@@ -4,7 +4,7 @@ library(zoo)
 library(data.table)
 
 ## Load in file with independent SNPs and their associated metabolite (here protein for me)
-snps = fread("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/FUMA_fullsumstats/leadSNPs/stacked_fumasnps_coloc.tsv")
+snps = fread("Metabolomics_Aut2021/FUMA_fullsumstats/leadSNPs/stacked_fumasnps_coloc.tsv")
 snps <- as.data.frame(snps)
 ## keep relevant columns-- what is this for?
 snps_cols <- snps[,c(1,2,3)]

@@ -1,7 +1,7 @@
 #libraries
 library(tidyverse)
 
-metabolite_cidi <- read.csv('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/cidi_pheno/norm_metabol_allmerged_wispectro.csv', header = TRUE)
+metabolite_cidi <- read.csv('Metabolomics_Aut2021/cidi_pheno/norm_metabol_allmerged_wispectro.csv', header = TRUE)
 
 
 #running the models 
@@ -24,5 +24,5 @@ results$FDR_P <- p.adjust(results[,"mdd_P"], method = 'BH')
 
 results <- results[order(results$FDR_P),]
 
-write.csv(results ,'/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/cidi_pheno/metabol_mdd_results/unadjusted_withAS_spectr_results.csv', row.names = F) #change to appropriate file
+write.csv(results ,'Metabolomics_Aut2021/cidi_pheno/metabol_mdd_results/unadjusted_withAS_spectr_results.csv', row.names = F) #change to appropriate file
 

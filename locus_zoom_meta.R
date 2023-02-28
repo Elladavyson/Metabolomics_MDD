@@ -45,28 +45,28 @@ locus_plot <- function(sumstats, LD_file, lowerlim, upperlim, colocalised_SNP, f
 
 ##LA to TFA plot ## 
 
-la_sumstats_chr11 <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/chr11_signif_metabolites/f.23456.0.0chr_11.tsv', sep = '\t', header = T)
-rs174578_ld <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/SNP_ld/rs174578.ld', header = T)
+la_sumstats_chr11 <- read.table('Metabolomics/chr11_signif_metabolites/f.23456.0.0chr_11.tsv', sep = '\t', header = T)
+rs174578_ld <- read.table('Metabolomics/SNP_ld/rs174578.ld', header = T)
 
 LA_TFA_locus_plot <- locus_plot(la_sumstats_chr11, rs174578_ld, 61450000, 61800000, 'rs174578', 'f.23456.0.0')
 ## DHA plot ##
 
-DHA_sumstats_chr11 <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/chr11_signif_metabolites/f.23450.0.0chr_11.tsv', sep = '\t', header = T)
-rs2727271_ld <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/SNP_ld/rs2727271.ld', header = T)
+DHA_sumstats_chr11 <- read.table('Metabolomics/chr11_signif_metabolites/f.23450.0.0chr_11.tsv', sep = '\t', header = T)
+rs2727271_ld <- read.table('Metabolomics/SNP_ld/rs2727271.ld', header = T)
 
 DHA_locus_plot <- locus_plot(DHA_sumstats_chr11, rs2727271_ld, 61450000, 61800000, 'rs2727271', 'f.23450.0.0')
 DHA_locus_plot_sameLD <- locus_plot(DHA_sumstats_chr11, rs174578_ld, 61450000, 61800000, 'rs174578', 'f.23450.0.0')
 
 ##DHA to Total Fatty Acids ## 
 
-DHA_TFA_sumstats_chr11 <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/chr11_signif_metabolites/f.23457.0.0chr_11.tsv', sep = '\t', header = T)
-rs174575_ld <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/SNP_ld/rs174575.ld', header = T)
+DHA_TFA_sumstats_chr11 <- read.table('Metabolomics/chr11_signif_metabolites/f.23457.0.0chr_11.tsv', sep = '\t', header = T)
+rs174575_ld <- read.table('Metabolomics/SNP_ld/rs174575.ld', header = T)
 
 DHA_TFA_locus_plot <- locus_plot(DHA_TFA_sumstats_chr11, rs174575_ld, 61450000, 61800000, 'rs174575', 'f.23457.0.0')
   
 ## MDD locus plot - slightly different scales etc ##
 
-mdd_chr11 <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/mdd_sumstats_chr11_noUKB_withNandBETA.tsv', sep = '\t', header = T)
+mdd_chr11 <- read.table('Metabolomics/mdd_sumstats_chr11_noUKB_withNandBETA.tsv', sep = '\t', header = T)
 subset_mdd_chr11 <- mdd_chr11[which(mdd_chr11$BP >= 61450000),]
 subset_mdd_chr11 <- subset_mdd_chr11[which(subset_mdd_chr11$BP <= 61800000),]
 mdd_snps_in_LD_matrix_df <- merge(subset_mdd_chr11, rs174578_ld[,c('SNP_B', 'R2')], by.x = 'SNP', by.y = 'SNP_B')
@@ -81,7 +81,7 @@ mdd_locus_plot <- ggplot(mdd_snps_in_LD_matrix_df, aes(x = BP, y = -log10(P))) +
 ## the gene tracks of the region ##
 
 #### not sure what the above is , but doing it with ggplot ####
-more_UCSC_genes <- read.table('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/6145-618_UCSC_genes', sep = '\t', header = F)
+more_UCSC_genes <- read.table('Metabolomics/6145-618_UCSC_genes', sep = '\t', header = F)
 colnames(more_UCSC_genes) <- c('Chrom', 'Start', 'End', 'Gene', 'Description')
 
 more_UCSC_genes$Colour <- 'black' #change this depending on the genes which we tested 
@@ -106,10 +106,10 @@ gene_track_plot <- ggplot(more_UCSC_genes, aes(x = BP, y = Y)) + geom_segment(ae
 gene_track_plot <- gene_track_plot+guides(color="none")                                                                                                                                                                                                                                                                                                                                                                     
 
 all_plots <- ggarrange(LA_TFA_locus_plot,DHA_locus_plot, DHA_TFA_locus_plot, mdd_locus_plot, gene_track_plot, common.legend = T, nrow = 5, ncol = 1)
-ggsave('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/plots/locus_zoom_plots.tiff', device = 'tiff', all_plots, scale = 1, width = 184, height = 285, units ="mm")
+ggsave('Metabolomics/plots/locus_zoom_plots.tiff', device = 'tiff', all_plots, scale = 1, width = 184, height = 285, units ="mm")
 
 #DHA_plots <- ggarrange(DHA_locus_plot, DHA_TFA_locus_plot, mdd_locus_plot, gene_track_plot, common.legend = T, labels = c('A', 'B', 'C', 'D'), nrow = 4, ncol =1)
-#ggsave('UniversityEdinburgh/PhD/Data/UKB/Metabolomics/plots/DHA_all_locus_zoom.tiff', device = 'tiff', DHA_plots, scale = 1, width = 190, height = 243.2, units ="mm", bg = "white")
+#ggsave('Metabolomics/plots/DHA_all_locus_zoom.tiff', device = 'tiff', DHA_plots, scale = 1, width = 190, height = 243.2, units ="mm", bg = "white")
 DHA_plot_single <- ggarrange(DHA_locus_plot, mdd_locus_plot, gene_track_plot, common.legend = T, labels = c('A', 'B', 'C'), nrow = 3, ncol = 1)
 #la_tfa_plots <- ggarrange(LA_TFA_locus_plot, mdd_locus_plot, gene_track_plot, common.legend = T, labels = c('A', 'B', 'C'), nrow = 3, ncol = 1)
-ggsave('UniversityEdinburgh/PhD/Year_1/Metabolomics_Submission/Revisions/Revisions 3/Figure_3.tiff', device = 'tiff', DHA_plot_single, scale = 1, width = 190, height = 243.2, units ="mm", bg = "white")
+ggsave('Figure_3.tiff', device = 'tiff', DHA_plot_single, scale = 1, width = 190, height = 243.2, units ="mm", bg = "white")

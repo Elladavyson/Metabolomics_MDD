@@ -8,7 +8,7 @@
 
 #filepaths 
 
-METABOLOMICS=/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021
+METABOLOMICS=Metabolomics_Aut2021
 GWAS_DIR=/exports/eddie/scratch/s2112198/col_num_loop
 LDSC=/exports/eddie/scratch/s2112198/ldsc
 

@@ -14,7 +14,7 @@ instruments_list <- list()
 
 for(i in 1:length(exposures)){
    exposure <- exposures[i]
-   exposure_filename = paste0('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/', exposure, '.sumstats.tsv')
+   exposure_filename = paste0('Metabolomics_Aut2021/GTEx_data/', exposure, '.sumstats.tsv')
    eQTL_exposure <- read_exposure_data(filename = exposure_filename,
    sep = '\t',
    snp_col = 'rs_id_dbSNP151_GRCh38p7', 
@@ -53,7 +53,7 @@ for(i in 1:length(exposures)){
 print('Outcome Data')
 
 #the full MDD summary statistics 
-mdd_outcome_data <- read_outcome_data(filename = '/exports/eddie/scratch/s2112198/23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz',
+mdd_outcome_data <- read_outcome_data(filename = '23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz',
   snps = instrument$SNP,
   snp_col = "MarkerName",
   beta_col = "Effect",
@@ -117,6 +117,6 @@ print(instrument)
 
 instruments_df <- do.call(rbind, instruments_list)
 
-write.table(mr_results_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_WR_MR_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
-write.table(steiger_results_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_WR_steiger_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
-write.table(instruments_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_MR_instruments.tsv', sep = '\t', row.names = F, quote = F)
+write.table(mr_results_df, 'Metabolomics_Aut2021/GTEx_data/GTEx_WR_MR_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
+write.table(steiger_results_df, 'Metabolomics_Aut2021/GTEx_data/GTEx_WR_steiger_results_fullsumstats.tsv', sep = '\t', row.names = F, quote = F)
+write.table(instruments_df, 'Metabolomics_Aut2021/GTEx_data/GTEx_MR_instruments.tsv', sep = '\t', row.names = F, quote = F)

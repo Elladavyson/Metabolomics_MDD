@@ -11,11 +11,11 @@ library(data.table)
 #reading in the list of metabolites (three to start with )
   
 print("Reading in the metabolite list")
-list_all_metabolites <- read.table("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/all_metabolites_list.txt")
+list_all_metabolites <- read.table("Metabolomics_Aut2021/all_metabolites_list.txt")
 
 #the linker file and function to get meaningful metabolite_name 
 print("Reading in the metabolite linker file ")
-meta_name_linker <- read.csv('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/Nightingale_markers_desc_full.csv', header = TRUE)
+meta_name_linker <- read.csv('Metabolomics_Aut2021/Nightingale_markers_desc_full.csv', header = TRUE)
 meta_name_linker$linker_ID <- paste(meta_name_linker$Field.ID, ".0.0", sep = '')
 meta_name_linker$linker_ID <- paste('f.',meta_name_linker$linker_ID, sep = '')
 
@@ -39,7 +39,7 @@ print("Beginning the loop")
 for (i in 1:dim(list_all_metabolites)[1]) {
   metabolite <- list_all_metabolites[i,]
   print(metabolite)
-  file_name <- paste("/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_GWAS/all_part_GWAS/", metabolite, ".gwas/norm_all_gwas.", metabolite, ".glm.linear.ldsc.gz", sep = "")
+  file_name <- paste("Metabolomics_Aut2021/norm_GWAS/all_part_GWAS/", metabolite, ".gwas/norm_all_gwas.", metabolite, ".glm.linear.ldsc.gz", sep = "")
   print(file_name)
   exposure_data <- read_exposure_data(filename = file_name,
    sep = '\t',
@@ -80,7 +80,7 @@ GI_summary[i,6] <- dim(exposure_data_clumped)[1]
 print(paste("Number of genetic instruments for MR", dim(exposure_data_clumped)[1]))
 print("reading in the outcome data")
 
-mdd_outcome_data <- read_outcome_data(filename = '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/raw_GWAS/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz',
+mdd_outcome_data <- read_outcome_data(filename = 'Metabolomics_Aut2021/raw_GWAS/mdd_sumstats_noUKB_withN_PGC2_andBETA.gz',
   snps = exposure_data_clumped$SNP,
   sep = "\t",
   snp_col = "SNP",
@@ -125,7 +125,7 @@ colnames(mr_horiz_pleio)[c(1,2,6,7)] <- c("egger_exposure", "egger_outcome", "eg
 combined_results <- cbind(mr_results, mr_hetero[c(5,6,7,8)])
 combined_results <- cbind(combined_results, mr_horiz_pleio[c(5,6,7)])
 
-results_directory <- '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_metabolite_toMDD/MR_results/'
+results_directory <- 'Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_metabolite_toMDD/MR_results/'
 
 combinedresults_filename <- paste(results_directory, metabolite, ".mr_results.tsv", sep = "")
 singlesnp_filename <- paste(results_directory, metabolite, ".mr_singlesnp_results.tsv", sep = "")
@@ -163,6 +163,6 @@ mr_report(harmonised_data, output_path = report_directory)
 
 else print("Not enough genetic instruments for MR analysis")
 
-write.table(GI_summary, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_metabolite_toMDD/MR_results/met_MDD_GI_summary.tsv', sep = '\t', quote = F, row.names = F)
+write.table(GI_summary, 'Metabolomics_Aut2021/MR_analysis/norm_GWAS_MR/MR_metabolite_toMDD/MR_results/met_MDD_GI_summary.tsv', sep = '\t', quote = F, row.names = F)
 
 }

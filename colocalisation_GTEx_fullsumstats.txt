@@ -6,7 +6,7 @@ library(readr)
 #read in the MDD sumstats 
 print("MDD sumstats")
 
-mdd_sumstats <- as.data.frame(fread("/exports/eddie/scratch/s2112198/23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz")) 
+mdd_sumstats <- as.data.frame(fread("23andmePGCUKB_May28_FinalGCldsc_3cohort1.meta_withN.pos.txt.gz")) 
 
 print("Filtering snps for MAF > 0.005")
 
@@ -16,7 +16,7 @@ mdd_sumstats$MAF <- ifelse(mdd_sumstats$Freq1 > 0.5, 1-mdd_sumstats$Freq1, mdd_s
 
 print('All eQTL_sumstats from GTEx')
 
-gTEX_sumstats <- read.table('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_data/GTEx_Whole_Blood_all_assoc_chr11.tsv', sep = '\t', header =T)
+gTEX_sumstats <- read.table('Metabolomics_Aut2021/GTEx_data/GTEx_Whole_Blood_all_assoc_chr11.tsv', sep = '\t', header =T)
 #Dictionary for the proteins and their ENSEMBL IDs
 
 proteins = c('MYRF'='ENSG00000124920.13', 'TMEM258'= 'ENSG00000134825.15', 'FEN1'='ENSG00000168496.3','FADS1' = 'ENSG00000149485.18', 'FADS2'='ENSG00000134824.13', 'FADS3'='ENSG00000221968.8')
@@ -104,7 +104,7 @@ output  <- as.data.frame(output)
 output = output[rev(order(output$PP.H4)),] 
 
 ## Save output 
-write.csv(output, "/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/all_eQTL/all_GTEx_coloc_results_full_sumstats.csv", row.names = F) 
+write.csv(output, "Metabolomics_Aut2021/all_eQTL/all_GTEx_coloc_results_full_sumstats.csv", row.names = F) 
 
 
 

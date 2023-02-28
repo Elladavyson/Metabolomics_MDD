@@ -1,12 +1,12 @@
 ##Documenting how I made the GTEx file (just saved it really ) ##
 
-gTEX_sumstats <- read_parquet('/exports/igmm/eddie/BioinformaticsResources/gtex/gtex_analysis_v8/GTEx_Analysis_v8_EUR_eQTL_all_associations/Whole_Blood.v8.EUR.allpairs.chr11.parquet')
+gTEX_sumstats <- read_parquet('Whole_Blood.v8.EUR.allpairs.chr11.parquet')
 
 #reading in the genome look up file to match up the SNPs to position on GRCh37 build (which is what the MDD summary stats use)
-genome_lookup <- read_table('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.b9vtu0aK.lookup_table.txt.gz.part')
+genome_lookup <- read_table('Metabolomics_Aut2021/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.b9vtu0aK.lookup_table.txt.gz.part')
 gTEX_sumstats <- merge(gTEX_sumstats, genome_lookup[,c('variant_id', 'chr', 'variant_pos', 'variant_id_b37', 'rs_id_dbSNP151_GRCh38p7')], by = 'variant_id')
 #just extracting only the BP number for the GRCr position
 
 gTEX_sumstats$variant_pos_b37 <- as.numeric(substr(eQTL_sumstats$variant_id_b37, 4,11))
 
-write.table(gTEX_sumstats, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/GTEx_Whole_Blood_all_assoc_chr11.tsv', sep = '\t', row.names = F, quote = F)
+write.table(gTEX_sumstats, 'Metabolomics_Aut2021/GTEx_Whole_Blood_all_assoc_chr11.tsv', sep = '\t', row.names = F, quote = F)

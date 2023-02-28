@@ -14,12 +14,12 @@ library(zoo)
 
 #reading in the NMR data table (useful for annotating)
 
-nmr_info <- read.table('/Users/ellad/UniversityEdinburgh/PhD/Data/UKB/Metabolomics/nmr_info.tsv', sep = '\t', header = TRUE)
+nmr_info <- read.table('Metabolomics/nmr_info.tsv', sep = '\t', header = TRUE)
 nmr_info$matchingmet <- paste('f.', nmr_info$UKB.Field.ID, '.0.0', sep = "")
 
 #linker file 
 
-meta_name_linker <- read.csv("/Users/ellad/UniversityEdinburgh/PhD/Data/UKB/Metabolomics/Nightingale_markers_desc_full.csv", header = TRUE)
+meta_name_linker <- read.csv("Nightingale_markers_desc_full.csv", header = TRUE)
 meta_name_linker$linker_ID <- paste(meta_name_linker$Field.ID, ".0.0", sep = '')
 meta_name_linker$linker_ID <- paste('f.',meta_name_linker$linker_ID, sep = '')
 

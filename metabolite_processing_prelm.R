@@ -11,7 +11,7 @@
 ### libraries 
 ### make sure the library with all packages in is in the library paths
 
-.libPaths('/exports/igmm/eddie/GenScotDepression/users/edavyson/R/x86_64-pc-linux-gnu-library/4.1') 
+.libPaths('') 
 library(data.table)
 library(dplyr)
 library(readr)
@@ -21,12 +21,12 @@ library(tidyverse)
 
 ### files 
 #copied from /exports/igmm/datastore/igmm/datastore/GenScotDepression/data/ukb/phenotypes/fields/2021-04-phenotypes-ukb44797/
-recruitment_file <- readRDS("/exports/eddie/scratch/s2112198/Recruitment.rds")
-physicalmeasures <- readRDS("/exports/eddie/scratch/s2112198/PhysicalMeasures.rds")
-baseline_charac <- readRDS("/exports/eddie/scratch/s2112198/BaselineCharacteristics.rds")
-nmr_withqc <- read.table('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/NMRMetabolomics_withqc.tsv', sep = '\t', header = TRUE)
-touchscreen <- readRDS('/exports/eddie/scratch/s2112198/Touchscreen.rds')
-mdd_cidi_phenotype <- readRDS("/exports/eddie/scratch/s2112198/MHQ.1907.ukb24262.Process_MH_Questionnaire_Output.rds")
+recruitment_file <- readRDS("Recruitment.rds")
+physicalmeasures <- readRDS("PhysicalMeasures.rds")
+baseline_charac <- readRDS("BaselineCharacteristics.rds")
+nmr_withqc <- read.table('Metabolomics_Aut2021/NMRMetabolomics_withqc.tsv', sep = '\t', header = TRUE)
+touchscreen <- readRDS('Touchscreen.rds')
+mdd_cidi_phenotype <- readRDS("MHQ.1907.ukb24262.Process_MH_Questionnaire_Output.rds")
 
 ## getting the MDD phenotype and removing the missing values 
 mdd_cidi_phenotype <- mdd_cidi_phenotype[,c('f.eid', 'Depressed.Ever')]
@@ -43,12 +43,12 @@ recruitment_age_AS <- recruitment_file[,c('f.eid', 'f.21003.0.0', 'f.54.0.0')]
 colnames(recruitment_age_AS) <- c("f.eid", "Age", "AS")
 
 ##or if staging node not available read in using the RDS function
-#recruitment_age_AS <- readRDS('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/age_AS_recruit.rds')
+#recruitment_age_AS <- readRDS('Metabolomics_Aut2021/age_AS_recruit.rds')
 
 ## SEX ##
 #baseline characteristic file - sex is field 31-0.0 
 
-baseline_charac <- readRDS("/exports/igmm/datastore/GenScotDepression/data/ukb/phenotypes/fields/2021-04-phenotypes-ukb44797/BaselineCharacteristics.rds")
+baseline_charac <- readRDS("2021-04-phenotypes-ukb44797/BaselineCharacteristics.rds")
 baseline_sex <- baseline_charac[, c("f.eid", "f.31.0.0")]
 
 #recoding the Male and Female strings as 1 and 0 respectively
@@ -59,7 +59,7 @@ baseline_sex_coded <- baseline_sex_coded[,c(1,3)] #leaving out the "Male" and "F
 colnames(baseline_sex_coded) <- c("f.eid", "Sex")
 
 ##or if staging node not available read in using the RDS function
-#baseline_sex_coded <- readRDS('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/baseline_sex.rds')
+#baseline_sex_coded <- readRDS('Metabolomics_Aut2021/baseline_sex.rds')
 
 ## Townsend deprivation index 
 # baseline characteristic file, field is f.189.0.0
@@ -73,7 +73,7 @@ BMI <- physicalmeasures[,c('f.eid', 'f.21001.0.0')]
 colnames(BMI)[2] <- 'BMI'
 
 ##or if staging node not available read in using the RDS function
-#BMI <- readRDS('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/BMI_covariate.rds')
+#BMI <- readRDS('Metabolomics_Aut2021/BMI_covariate.rds')
 
 ##TOUCHSCREEN MEASURES- ethnicity, smoking status and education ## 
 
@@ -181,15 +181,15 @@ mdd_controls_characteristics <- get_characteristics_from_data(controls_mdd_df, '
 characteristic_table <- rbind(baseline_characteristics, metabolite_characteristics, mdd_characteristics, all_characteristics, mdd_cases_characteristics, mdd_controls_characteristics)
 characteristic_table_round <- characteristic_table %>% mutate_if(is.numeric, round, digits = 2)
 
-write.table(all_combined_df, '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_metabolite_covariate_revisions.tsv', sep = '\t', row.names = F, quote = F)
-write.table(characteristic_table_round,'/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/characteristic_paper_table1.tsv', sep = '\t', row.names = F, quote = F) 
+write.table(all_combined_df, 'Metabolomics_Aut2021/norm_metabolite_covariate_revisions.tsv', sep = '\t', row.names = F, quote = F)
+write.table(characteristic_table_round,'Metabolomics_Aut2021/characteristic_paper_table1.tsv', sep = '\t', row.names = F, quote = F) 
 
 
 
 ##for pippa
 
-write.table(metabolite_df, '/exports/igmm/eddie/GenScotDepression/Pippa_ella/metabolite_UKB.tsv', sep = '\t', row.names = F, quote = F)
-write.table(all_combined_df, '/exports/igmm/eddie/GenScotDepression/Pippa_ella/metabolite_MDD_UKB.tsv', sep = '\t', row.names = F, quote = F)
+write.table(metabolite_df, 'metabolite_UKB.tsv', sep = '\t', row.names = F, quote = F)
+write.table(all_combined_df, 'metabolite_MDD_UKB.tsv', sep = '\t', row.names = F, quote = F)
 
 
 

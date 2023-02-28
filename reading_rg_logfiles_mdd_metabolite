@@ -9,7 +9,7 @@ start_time = time.time()
 #directories 
 
 ldsc_dir = '/exports/eddie/scratch/s2112198/'
-eddie_gwas_dir = '/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_GWAS/'
+eddie_gwas_dir = 'Metabolomics_Aut2021/norm_GWAS/'
 
 #rg log file names
 log_files_name = "%s.ldsc.rg_met_mdd.log"

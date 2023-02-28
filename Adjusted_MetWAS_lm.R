@@ -1,7 +1,7 @@
 #libraries
 library(tidyverse)
 
-metabolite_cidi_bmi <- read.table('/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/norm_metabolite_covariate_revisions.tsv', sep = '\t', header = TRUE)
+metabolite_cidi_bmi <- read.table('Metabolomics_Aut2021/norm_metabolite_covariate_revisions.tsv', sep = '\t', header = TRUE)
 
 #running the models 
 length = 249
@@ -23,5 +23,5 @@ for(i in 3:251){
 results$FDR_P <- p.adjust(results[,"mdd_P"], method = 'BH')
 results <- results[order(results$FDR_P),]
 
-write.csv(results ,'/exports/igmm/eddie/GenScotDepression/users/edavyson/Metabolomics_Aut2021/cidi_pheno/metabol_mdd_results/adjusted_results_all_covariates_revisions.csv', row.names = F) #change to appropriate file
+write.csv(results ,'Metabolomics_Aut2021/cidi_pheno/metabol_mdd_results/adjusted_results_all_covariates_revisions.csv', row.names = F) #change to appropriate file
 
