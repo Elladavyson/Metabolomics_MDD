@@ -1,0 +1,26 @@
+#$ -l h_rt=48:00:00
+#$ -l h_vmem=2G
+#$ -pe sharedmem 12
+#$ -t 3-251:10
+#$ -e gwas_logs
+#$ -o gwas_logs
+#$ -cwd
+
+
+IMPV3=impv3_pgen
+METABOLOMICS=Metabolomics_Aut2021
+SCRATCH=s2112198
+
+local/bin/plink2 \
+--pfile $IMPV3/ukb_imp_v3.qc \
+--pheno $METABOLOMICS/unrel_eur_metabolite_covar.tsv \
+--pheno-col-nums $SGE_TASK_ID-$((SGE_TASK_ID+SGE_TASK_STEPSIZE-2)) \
+--covar $METABOLOMICS/unrel_eur_metabolite_covar.tsv \
+--covar-name genotyping sex age AS PC1-PC10 \
+--covar-variance-standardize \
+--linear 'hide-covar' cols=chrom,pos,ax,a1freq,machr2,nobs,orbeta,se,p \
+--out $SCRATCH/col_num_loop/all_gwas \
+--memory 92000 \
+--threads 12
+
+
