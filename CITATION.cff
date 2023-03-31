@@ -1,0 +1,10 @@
+cff-version: 1.1.0
+message: "If you use this code, please cite it as below."
+authors:
+  - family-names: Eleanor
+    given-names: Davyson
+    orcid: https://orcid.org/0000-0002-7313-0530
+title: Elladavyson/Metabolomics_MDD: Metabolomics_MDD_UKB
+version: 01
+date-released: 2023-03-31
+            
