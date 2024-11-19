@@ -1,4 +1,5 @@
-# Metabolomic-investigation-of-major-depressive-disorder-identifies-a-potentially-causal-association-w
+# Metabolomic-investigation-of-major-depressive-disorder-identifies-a-potentially-causal-association-w 
+[![DOI](https://zenodo.org/badge/606032513.svg)](https://doi.org/10.5281/zenodo.7788315)
 Code for analysis presented in the paper at : https://www.biologicalpsychiatryjournal.com/article/S0006-3223(23)00055-0/fulltext
 
 ## Analysis Scripts 
